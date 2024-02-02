@@ -1,4 +1,4 @@
-import { Menu, Grid, MenuItem, IconButton, styled } from "@mui/material";
+import { Menu, Grid, MenuItem, IconButton, styled, Tooltip } from "@mui/material";
 import React, { useContext, useState } from "react";
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { MonthContext, MonthContextType } from "../../context/MonthContextProvider";
@@ -44,12 +44,14 @@ export function MonthPicker() {
     }
 
     return <>
-        <IconButton
-            onClick={handleClick}
-            sx={{ mr: 2 }}
-        >
-            <CalendarMonthIcon />
-        </IconButton>
+        <Tooltip title='Change month' placement='bottom-start'>
+            <IconButton
+                onClick={handleClick}
+                sx={{ mr: 2 }}
+            >
+                <CalendarMonthIcon />
+            </IconButton>
+        </Tooltip>
         <Menu
             anchorEl={anchorEl}
             open={open}
@@ -59,7 +61,7 @@ export function MonthPicker() {
         >
             <Grid container >
                 {months.map((m, index) =>
-                    <Grid item xs={4}>
+                    <Grid item xs={4} key={m}>
                         <StyledMenuItem
                             selected={index === month}
                             onClick={() => handleSelectMonth(index)}

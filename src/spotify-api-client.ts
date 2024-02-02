@@ -19,6 +19,7 @@ interface LikedTrackApiResponse {
             id: string;
         }
     }[];
+    total: number;
 }
 
 export class SpotifyApiClient {
@@ -31,23 +32,23 @@ export class SpotifyApiClient {
         };
     }
 
-    public async getAllLikedTracks(): Promise<LikedTrack[]> {
+    public async getAllLikedTracks(progressCallback?: (currentCount: number, total: number) => void): Promise<LikedTrack[]> {
         const limit = 50;
         let offset = 0;
-        let itemsCount = limit;
+        let { total } = await this.getLikedTracks(1, 0);
         let all: LikedTrack[] = [];
 
-        while (itemsCount === limit) {
-            let currentTracks = await this.getLikedTracks(limit, offset);
-            all = [...all, ...currentTracks];
+        while (all.length < total) {
+            let { likedTracks } = await this.getLikedTracks(limit, offset);
+            all = [...all, ...likedTracks];
             offset += limit;
-            itemsCount = currentTracks.length;
+            progressCallback?.(all.length, total);
         }
 
         return all;
     }
 
-    private async getLikedTracks(limit: number, offset: number): Promise<LikedTrack[]> {
+    private async getLikedTracks(limit: number, offset: number): Promise<{ likedTracks: LikedTrack[], total: number }> {
         const response = await axios.get<LikedTrackApiResponse>('https://api.spotify.com/v1/me/tracks', {
             headers: this.headers,
             params: {
@@ -56,7 +57,10 @@ export class SpotifyApiClient {
             }
         });
 
-        return response.data.items.map(this.toLikedTrack);
+        return {
+            likedTracks: response.data.items.map(this.toLikedTrack),
+            total: response.data.total
+        };
     }
 
     private toLikedTrack(trackItem: LikedTrackApiResponse['items'][0]) {

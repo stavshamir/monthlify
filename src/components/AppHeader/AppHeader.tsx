@@ -64,7 +64,7 @@ export function AppHeader(props: AppHeaderProps) {
     }
 
     return (
-        <AppBar position="static">
+        <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }} elevation={0}>
             <Toolbar>
                 <Typography variant="h6" component="div" style={{ display: 'flex', gap: '5px', marginRight: '15px' }}>
                     {months[month]}
