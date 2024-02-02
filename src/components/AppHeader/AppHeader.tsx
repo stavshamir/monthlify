@@ -1,22 +1,24 @@
 import { Box, Toolbar, Typography, Button, AppBar } from "@mui/material";
 import { ACCESS_TOKEN_STORAGE_KEY } from "../../constants";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { SpotifyApiClient } from "../../spotify-api-client";
+import { MonthPicker } from "../MonthPicker/MonthPicker";
+import { MonthContext, MonthContextType } from "../../context/MonthContextProvider";
 
-const monthEmojis: { [k: string]: string } = {
-    'January': '❄️',
-    'February': '🌧️',
-    'March': '☘️',
-    'April': '☔',
-    'May': '🌸',
-    'June': '🌞',
-    'July': '🏖️',
-    'August': '🍦',
-    'September': '🍂',
-    'October': '🎃',
-    'November': '🍁',
-    'December': '🎄'
-};
+const months: string[] = [
+    '❄️ January',
+    '🌧️ February',
+    '☘️ March',
+    '☔ April',
+    '🌸 May',
+    '🌞 June',
+    '🏖️ July',
+    '🍦 August',
+    '🍂 September',
+    '🎃 October',
+    '🍁 November',
+    '🎄 December'
+];
 
 const CLIENT_ID = "1600aea2add742c99b0fa00476250d61";
 const REDIRECT_URI = "http://localhost:3000";
@@ -30,7 +32,7 @@ interface AppHeaderProps {
 }
 
 export function AppHeader(props: AppHeaderProps) {
-    const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
+    const { month } = useContext(MonthContext)! as MonthContextType;
 
     useEffect(() => {
         if (props.spotifyApiClient) {
@@ -49,7 +51,7 @@ export function AppHeader(props: AppHeaderProps) {
         window.location.hash = '';
         window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, extractedToken);
         props.setSpotifyApiClient(new SpotifyApiClient(extractedToken));
-    }, [props.spotifyApiClient])
+    }, [props])
 
 
     function onLogin() {
@@ -61,18 +63,19 @@ export function AppHeader(props: AppHeaderProps) {
         window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
     }
 
-    return <Box sx={{ flexGrow: 1 }}>
+    return (
         <AppBar position="static">
             <Toolbar>
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                    <span>{monthEmojis[monthName]}</span>
-                    <span>{monthName}</span>
+                <Typography variant="h6" component="div" style={{ display: 'flex', gap: '5px', marginRight: '15px' }}>
+                    {months[month]}
                 </Typography>
+                <MonthPicker />
+                <Box sx={{ flexGrow: 1 }} />
                 {props.spotifyApiClient
                     ? <Button color="inherit" onClick={onLogout}>Logout</Button>
                     : <Button color="inherit" onClick={onLogin}>Login</Button>
                 }
             </Toolbar>
         </AppBar>
-    </Box>
+    );
 }

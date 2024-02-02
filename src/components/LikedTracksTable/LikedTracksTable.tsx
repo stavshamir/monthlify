@@ -1,5 +1,7 @@
 import { TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Typography } from "@mui/material";
-import { LikedTrack, Track } from "../../spotify-api-client";
+import { LikedTrack } from "../../spotify-api-client";
+import { useContext } from "react";
+import { MonthContext, MonthContextType } from "../../context/MonthContextProvider";
 
 interface LikedTracksTableProps {
     likedTracks: LikedTrack[]
@@ -25,6 +27,8 @@ function toTableRow(likedTrack: LikedTrack) {
 }
 
 export function LikedTracksTable(props: LikedTracksTableProps) {
+    const { month } = useContext(MonthContext)! as MonthContextType;
+
     return (
         <TableContainer component={Paper}>
             <Table>
@@ -37,7 +41,7 @@ export function LikedTracksTable(props: LikedTracksTableProps) {
                 </TableHead>
                 <TableBody>
                     {props.likedTracks
-                        .filter(({ addedAt }) => addedAt.getMonth() === new Date().getMonth())
+                        .filter(({ addedAt }) => addedAt.getMonth() === month)
                         .map(toTableRow)}
                 </TableBody>
             </Table>

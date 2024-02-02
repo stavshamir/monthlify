@@ -7,6 +7,7 @@ import { LikedTrack, SpotifyApiClient } from './spotify-api-client';
 import { AppHeader } from './components/AppHeader/AppHeader';
 import { ACCESS_TOKEN_STORAGE_KEY } from './constants';
 import { LikedTracksTable } from './components/LikedTracksTable/LikedTracksTable';
+import { MonthContextProvider } from './context/MonthContextProvider';
 
 
 const darkTheme = createTheme({
@@ -63,12 +64,13 @@ function App() {
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
 
-      <AppHeader
-        spotifyApiClient={spotifyApiClient}
-        setSpotifyApiClient={setSpotifyApiClient}
-      />
-
-      {getContent()}
+      <MonthContextProvider>
+        <AppHeader
+          spotifyApiClient={spotifyApiClient}
+          setSpotifyApiClient={setSpotifyApiClient}
+        />
+        {getContent()}
+      </MonthContextProvider>
 
     </ThemeProvider >
   );
