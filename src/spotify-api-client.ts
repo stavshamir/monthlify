@@ -48,6 +48,39 @@ export class SpotifyApiClient {
         return all;
     }
 
+    public async savePlaylist(playlistName: string, trackIds: string[]): Promise<string> {
+        const { id, url } = await this.createPlaylist(playlistName);
+        const batchSize = 100;
+        for (let i = 0; i < trackIds.length; i += batchSize) {
+            const batch = trackIds.slice(i, i + batchSize);
+            await axios.post(
+                `https://api.spotify.com/v1/playlists/${id}/tracks`,
+                { uris: batch.map(id => `spotify:track:${id}`) },
+                { headers: this.headers }
+            );
+        }
+
+        return url;
+    }
+
+    private async createPlaylist(playlistName: string): Promise<{ id: string, url: string }> {
+        const userId = await this.getCurrentUserId();
+        const response = await axios.post<{ id: string, external_urls: { spotify: string } }>(
+            `https://api.spotify.com/v1/users/${userId}/playlists`,
+            { name: playlistName, description: 'Created by Monthly from your liked tracks' },
+            { headers: this.headers }
+        );
+        return {
+            id: response.data.id,
+            url: response.data.external_urls.spotify
+        };
+    }
+
+    private async getCurrentUserId(): Promise<string> {
+        const response = await axios.get<{ id: string }>('https://api.spotify.com/v1/me', { headers: this.headers });
+        return response.data.id;
+    }
+
     private async getLikedTracks(limit: number, offset: number): Promise<{ likedTracks: LikedTrack[], total: number }> {
         const response = await axios.get<LikedTrackApiResponse>('https://api.spotify.com/v1/me/tracks', {
             headers: this.headers,

@@ -34,7 +34,7 @@ function App() {
     }
 
     spotifyApiClient
-      .getAllLikedTracks((currentCount: number, total: number) => setLikedTracksFetchProgress((currentCount/total) * 100))
+      .getAllLikedTracks((currentCount: number, total: number) => setLikedTracksFetchProgress((currentCount / total) * 100))
       .then(r => setLikedTracks(r));
   }, [spotifyApiClient]);
 
@@ -52,7 +52,10 @@ function App() {
     if (spotifyApiClient && likedTracks === null) {
       return (
         <Stack display='flex' justifyContent='center' alignItems='center' gap='12px' height='calc(100vh - 256px)'>
-          <CircularProgress size='5rem' variant='determinate' value={likedTracksFetchProgress}/>
+          <CircularProgress
+            size='5rem'
+            variant='determinate'
+            value={likedTracksFetchProgress} />
           <Typography variant="body1">Fetching all liked songs...</Typography>
         </Stack>
       );
@@ -70,7 +73,7 @@ function App() {
           spotifyApiClient={spotifyApiClient}
           setSpotifyApiClient={setSpotifyApiClient}
         />
-        <Toolbar/>
+        <Toolbar />
         {getContent()}
       </MonthContextProvider>
 

@@ -1,9 +1,10 @@
-import { Box, Toolbar, Typography, Button, AppBar } from "@mui/material";
+import { Box, Toolbar, Typography, Button, AppBar, Snackbar, Link, IconButton, Tooltip } from "@mui/material";
 import { ACCESS_TOKEN_STORAGE_KEY } from "../../constants";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { SpotifyApiClient } from "../../spotify-api-client";
 import { MonthPicker } from "../MonthPicker/MonthPicker";
 import { MonthContext, MonthContextType } from "../../context/MonthContextProvider";
+import LaunchIcon from '@mui/icons-material/Launch';
 
 const months: string[] = [
     '❄️ January',
@@ -20,10 +21,9 @@ const months: string[] = [
     '🎄 December'
 ];
 
-const CLIENT_ID = "1600aea2add742c99b0fa00476250d61";
 const REDIRECT_URI = "http://localhost:3000";
 const RESPONSE_TYPE = "token";
-const SCOPE = 'user-library-read';
+const SCOPE = 'user-read-private user-library-read playlist-modify-public';
 const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`;
 
 interface AppHeaderProps {
@@ -32,7 +32,9 @@ interface AppHeaderProps {
 }
 
 export function AppHeader(props: AppHeaderProps) {
-    const { month } = useContext(MonthContext)! as MonthContextType;
+    const { month, trackIds } = useContext(MonthContext)! as MonthContextType;
+    const [playlistUrl, setPlaylistUrl] = useState<string>();
+    const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
 
     useEffect(() => {
         if (props.spotifyApiClient) {
@@ -63,13 +65,28 @@ export function AppHeader(props: AppHeaderProps) {
         window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
     }
 
-    return (
+    async function savePlaylist() {
+        const playlistUrl = await props.spotifyApiClient?.savePlaylist(months[month], trackIds);
+        setPlaylistUrl(playlistUrl);
+        setIsSnackbarOpen(true);
+    }
+
+    return <>
         <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }} elevation={0}>
             <Toolbar>
-                <Typography variant="h6" component="div" style={{ display: 'flex', gap: '5px', marginRight: '15px' }}>
+                <Typography variant="h6" component="div" style={{ marginRight: '15px' }}>
                     {months[month]}
                 </Typography>
                 <MonthPicker />
+                <Tooltip title='Create a new playlist in Spotify with the currently displayed tracks'>
+                    <Button
+                        variant='outlined'
+                        onClick={savePlaylist}
+                        disabled={trackIds.length === 0}
+                    >
+                        Save playlist
+                    </Button>
+                </Tooltip>
                 <Box sx={{ flexGrow: 1 }} />
                 {props.spotifyApiClient
                     ? <Button color="inherit" onClick={onLogout}>Logout</Button>
@@ -77,5 +94,16 @@ export function AppHeader(props: AppHeaderProps) {
                 }
             </Toolbar>
         </AppBar>
-    );
+        <Snackbar
+            open={isSnackbarOpen}
+            autoHideDuration={5000}
+            onClose={() => setIsSnackbarOpen(false)}
+            message={"Playlist saved: " + months[month]}
+            action={<Link href={playlistUrl} target='_blank'>
+                <IconButton size="small" color="inherit">
+                    <LaunchIcon />
+                </IconButton>
+            </Link>}
+        />
+    </>
 }
