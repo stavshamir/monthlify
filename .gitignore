@@ -12,6 +12,11 @@
 /build
 
 # misc
+.monthlify/
+.env
+.env.*
+!.env.example
+*.tmp
 .DS_Store
 .env.local
 .env.development.local

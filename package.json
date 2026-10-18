@@ -22,6 +22,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "test:sync": "node scripts/sync.test.cjs",
+    "monthlify": "node scripts/monthlify.cjs",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

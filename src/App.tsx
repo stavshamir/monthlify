@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 
 import './App.css';
 import { ThemeProvider } from '@emotion/react';
-import { createTheme, CssBaseline, Typography, CircularProgress, Stack, Toolbar } from '@mui/material';
+import { Alert, createTheme, CssBaseline, Typography, CircularProgress, Stack, Toolbar } from '@mui/material';
 import { LikedTrack, SpotifyApiClient } from './spotify-api-client';
 import { AppHeader } from './components/AppHeader/AppHeader';
-import { ACCESS_TOKEN_STORAGE_KEY } from './constants';
+import { completeLogin } from './spotify-auth';
 import { LikedTracksTable } from './components/LikedTracksTable/LikedTracksTable';
 import { MonthContextProvider } from './context/MonthContextProvider';
 
@@ -17,25 +17,35 @@ const darkTheme = createTheme({
 });
 
 function App() {
-  const [spotifyApiClient, setSpotifyApiClient] = useState<SpotifyApiClient | null>(getApiClient());
+  const [spotifyApiClient, setSpotifyApiClient] = useState<SpotifyApiClient | null>(null);
+  const [error, setError] = useState('');
   const [likedTracks, setLikedTracks] = useState<LikedTrack[] | null>(null);
   const [likedTracksFetchProgress, setLikedTracksFetchProgress] = useState<number>(0);
 
-  function getApiClient(): SpotifyApiClient | null {
-    const storedToken = window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-    return storedToken
-      ? new SpotifyApiClient(storedToken)
-      : null;
-  }
+  useEffect(() => {
+    let active = true;
+    completeLogin().then(loggedIn => {
+      if (active && loggedIn) setSpotifyApiClient(new SpotifyApiClient());
+    }).catch(() => { if (active) setError('Spotify login failed. Please log in again.'); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
+    setLikedTracks(null);
+    setLikedTracksFetchProgress(0);
+    setError('');
     if (!spotifyApiClient) {
       return;
     }
 
+    let active = true;
     spotifyApiClient
-      .getAllLikedTracks((currentCount: number, total: number) => setLikedTracksFetchProgress((currentCount / total) * 100))
-      .then(r => setLikedTracks(r));
+      .getAllLikedTracks((count: number, total: number) => {
+        if (active) setLikedTracksFetchProgress(total ? Math.min(100, count / total * 100) : 100);
+      })
+      .then(r => { if (active) setLikedTracks(r); })
+      .catch(() => { if (active) setError('Could not load liked songs. Try logging out and logging in again.'); });
+    return () => { active = false; };
   }, [spotifyApiClient]);
 
   function getContent() {
@@ -74,7 +84,7 @@ function App() {
           setSpotifyApiClient={setSpotifyApiClient}
         />
         <Toolbar />
-        {getContent()}
+        {error ? <Alert severity="error">{error}</Alert> : getContent()}
       </MonthContextProvider>
 
     </ThemeProvider >
