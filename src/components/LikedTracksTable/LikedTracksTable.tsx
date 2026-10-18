@@ -1,6 +1,7 @@
 import { TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Typography, TableSortLabel } from "@mui/material";
 import { LikedTrack } from "../../spotify-api-client";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useMemo, useState } from "react";
+import config from '../../monthlify.config.json';
 import { MonthContext, MonthContextType } from "../../context/MonthContextProvider";
 
 interface LikedTracksTableProps {
@@ -26,8 +27,8 @@ function toRowData(likedTrack: LikedTrack): RowData {
         title: track.name,
         artists: track.artists.join(', '),
         album: track.album,
-        yearAdded: addedAt.getFullYear(),
-        monthAdded: addedAt.getMonth()
+        yearAdded: Number(new Intl.DateTimeFormat('en-US', { year: 'numeric', timeZone: config.timezone }).format(addedAt)),
+        monthAdded: Number(new Intl.DateTimeFormat('en-US', { month: 'numeric', timeZone: config.timezone }).format(addedAt)) - 1
     }
 }
 
@@ -50,25 +51,21 @@ function toTableRow(data: RowData) {
 }
 
 export function LikedTracksTable(props: LikedTracksTableProps) {
-    const { month, setTrackIds } = useContext(MonthContext)! as MonthContextType;
+    const { month } = useContext(MonthContext)! as MonthContextType;
     const [order, setOrder] = useState<'asc' | 'desc'>('desc');
 
     const handleSort = () => {
         setOrder(order === 'asc' ? 'desc' : 'asc');
     };
 
-    const sortedRows = props.likedTracks
+    const sortedRows = useMemo(() => props.likedTracks
         .map(toRowData)
         .filter(({ monthAdded }) => monthAdded === month)
         .sort((a, b) => {
             const aValue = a.yearAdded;
             const bValue = b.yearAdded;
-            return (order === 'asc' ? 1 : -1) * (aValue > bValue ? 1 : -1);
-        });
-
-    useEffect(() => {
-        setTrackIds(sortedRows.map(r => r.id));
-    }, [sortedRows, setTrackIds]);
+            return (order === 'asc' ? 1 : -1) * (aValue - bValue);
+        }), [props.likedTracks, month, order]);
 
     return (
         <TableContainer component={Paper}>
